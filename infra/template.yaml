@@ -17,9 +17,17 @@ Parameters:
   InstanceType:
     Type: String
     Default: t3.micro
+  GitHubToken:
+    Type: String
+    NoEcho: true
+    Default: ''
+    Description: GitHub personal access token (repo + admin:repo_hook) so Amplify can build on every push. Empty = manual deploys.
   AmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Conditions:
+  UseGitHub: !Not [!Equals [!Ref GitHubToken, '']]
 
 Resources:
   ServerSecurityGroup:
@@ -118,6 +126,11 @@ Resources:
     Properties:
       Name: empire-of-assassins
       Platform: WEB
+      Repository: !If [UseGitHub, !Select [0, !Split ['.git', !Ref RepoUrl]], !Ref AWS::NoValue]
+      AccessToken: !If [UseGitHub, !Ref GitHubToken, !Ref AWS::NoValue]
+      EnvironmentVariables:
+        - { Name: VITE_SERVER_URL, Value: !Sub 'https://${ServerCdn.DomainName}' }
+        - { Name: VITE_CLOUDINARY_CLOUD, Value: tgjvnqns }
       CustomRules:
         # single-page app: /create, /lobby, /game all serve index.html; real files are served as-is
         - Source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|glb|avif)$)([^.]+$)/>'
@@ -130,6 +143,7 @@ Resources:
       AppId: !GetAtt WebApp.AppId
       BranchName: main
       Stage: PRODUCTION
+      EnableAutoBuild: !If [UseGitHub, true, false]
 
 Outputs:
   ServerUrl:
