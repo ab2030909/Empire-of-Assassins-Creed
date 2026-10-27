@@ -121,7 +121,7 @@ Resources:
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad          # Managed-CachingDisabled
           OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3  # Managed-AllViewer (needed for WebSocket upgrade)
 
-  WebApp:
+  GitWebApp:
     Type: AWS::Amplify::App
     Properties:
       Name: empire-of-assassins
@@ -137,10 +137,10 @@ Resources:
           Target: /index.html
           Status: '200'
 
-  WebBranch:
+  GitWebBranch:
     Type: AWS::Amplify::Branch
     Properties:
-      AppId: !GetAtt WebApp.AppId
+      AppId: !GetAtt GitWebApp.AppId
       BranchName: main
       Stage: PRODUCTION
       EnableAutoBuild: !If [UseGitHub, true, false]
@@ -150,8 +150,8 @@ Outputs:
     Description: Game server (use as VITE_SERVER_URL when building the frontend)
     Value: !Sub https://${ServerCdn.DomainName}
   AmplifyAppId:
-    Value: !GetAtt WebApp.AppId
+    Value: !GetAtt GitWebApp.AppId
   WebsiteUrl:
-    Value: !Sub https://main.${WebApp.DefaultDomain}
+    Value: !Sub https://main.${GitWebApp.DefaultDomain}
   ServerInstanceId:
     Value: !Ref Server
