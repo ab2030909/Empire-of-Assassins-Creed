@@ -1,7 +1,10 @@
 import { io } from 'socket.io-client';
 import type { Action } from '../shared/engine';
 
-export const socket = io({ autoConnect: true, reconnection: true });
+// VITE_SERVER_URL points the deployed frontend (Amplify) at the game server (CloudFront -> EC2).
+// Locally it's unset and Vite proxies /socket.io to localhost:3001.
+const SERVER = (import.meta.env.VITE_SERVER_URL as string | undefined) || undefined;
+export const socket = SERVER ? io(SERVER, { autoConnect: true, reconnection: true }) : io({ autoConnect: true, reconnection: true });
 
 export interface Ack { ok: boolean; error?: string; code?: string; token?: string }
 

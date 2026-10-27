@@ -312,7 +312,7 @@ export default function Board3D({ g, selected, onSelect, view3d, onSettled, onPa
       mesh.position.y = TILE_H * 0.275; mesh.castShadow = mesh.receiveShadow = true; mesh.userData.id = i;
       grp.add(mesh); tileMeshes.push(mesh); tileGroups.push(grp); decoKeys.push('');
       const url = usePhoto(s.wiki);
-      if (url) { const img = new Image(); img.onload = () => { tex.image = paintTile(i, img); tex.needsUpdate = true; }; img.src = url; }
+      if (url) { const img = new Image(); img.crossOrigin = 'anonymous'; img.onload = () => { tex.image = paintTile(i, img); tex.needsUpdate = true; }; img.src = url; }
     });
 
     // drifting dust motes in the candle light
