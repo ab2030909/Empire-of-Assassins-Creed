@@ -1,0 +1,143 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Empire of Assassins. Game server (Node + socket.io, unchanged) on one small EC2 instance behind
+  CloudFront for HTTPS/WebSockets, and the React frontend on Amplify Hosting (manual deploys).
+  Note: no player authentication; anyone with the link can create and join rooms.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  CloudFrontPrefixList:
+    Type: String
+    Description: Managed prefix list com.amazonaws.global.cloudfront.origin-facing (only CloudFront may reach the server)
+  RepoUrl:
+    Type: String
+    Default: https://github.com/ab2030909/Empire-of-Assassins-Creed.git
+  InstanceType:
+    Type: String
+    Default: t3.micro
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+
+Resources:
+  ServerSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Game server, port 3001 from CloudFront only
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 3001
+          ToPort: 3001
+          SourcePrefixListId: !Ref CloudFrontPrefixList
+
+  ServerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: ec2.amazonaws.com }
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore   # shell access via Session Manager, no SSH port
+
+  ServerProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles: [!Ref ServerRole]
+
+  Server:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      IamInstanceProfile: !Ref ServerProfile
+      SecurityGroupIds: [!Ref ServerSecurityGroup]
+      MetadataOptions: { HttpTokens: required }
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs: { VolumeSize: 8, VolumeType: gp3, Encrypted: true }
+      Tags: [{ Key: Name, Value: empire-of-assassins-server }]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -euxo pipefail
+          dnf install -y nodejs22 git
+          ln -sf /usr/bin/node-22 /usr/bin/node || true
+          ln -sf /usr/bin/npm-22 /usr/bin/npm || true
+          useradd -r -m -d /opt/eoa eoa || true
+          cd /opt/eoa
+          sudo -u eoa git clone --depth 1 ${RepoUrl} app
+          cd app
+          sudo -u eoa npm ci --omit=dev
+          cat >/etc/systemd/system/eoa.service <<'EOF'
+          [Unit]
+          Description=Empire of Assassins game server
+          After=network-online.target
+          [Service]
+          User=eoa
+          WorkingDirectory=/opt/eoa/app
+          Environment=PORT=3001 NODE_ENV=production
+          ExecStart=/opt/eoa/app/node_modules/.bin/tsx server/index.ts
+          Restart=always
+          RestartSec=3
+          [Install]
+          WantedBy=multi-user.target
+          EOF
+          systemctl daemon-reload
+          systemctl enable --now eoa
+
+  ServerCdn:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Empire of Assassins game server (socket.io)
+        PriceClass: PriceClass_100
+        Origins:
+          - Id: server
+            DomainName: !GetAtt Server.PublicDnsName
+            CustomOriginConfig:
+              HTTPPort: 3001
+              OriginProtocolPolicy: http-only
+              OriginReadTimeout: 60
+              OriginKeepaliveTimeout: 60
+        DefaultCacheBehavior:
+          TargetOriginId: server
+          ViewerProtocolPolicy: https-only
+          AllowedMethods: [GET, HEAD, OPTIONS, PUT, PATCH, POST, DELETE]
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad          # Managed-CachingDisabled
+          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3  # Managed-AllViewer (needed for WebSocket upgrade)
+
+  WebApp:
+    Type: AWS::Amplify::App
+    Properties:
+      Name: empire-of-assassins
+      Platform: WEB
+      CustomRules:
+        # single-page app: /create, /lobby, /game all serve index.html; real files are served as-is
+        - Source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|glb|avif)$)([^.]+$)/>'
+          Target: /index.html
+          Status: '200'
+
+  WebBranch:
+    Type: AWS::Amplify::Branch
+    Properties:
+      AppId: !GetAtt WebApp.AppId
+      BranchName: main
+      Stage: PRODUCTION
+
+Outputs:
+  ServerUrl:
+    Description: Game server (use as VITE_SERVER_URL when building the frontend)
+    Value: !Sub https://${ServerCdn.DomainName}
+  AmplifyAppId:
+    Value: !GetAtt WebApp.AppId
+  WebsiteUrl:
+    Value: !Sub https://main.${WebApp.DefaultDomain}
+  ServerInstanceId:
+    Value: !Ref Server
