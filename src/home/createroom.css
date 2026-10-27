@@ -1,0 +1,163 @@
+/* ===== Create Room page (reference layout: top nav, side menu, hero, cards, config) ===== */
+.cr2 { --gold: #d9b25e; --gold2: #8f6c26; --red: #b0141c; position: relative; min-height: 100vh; overflow: hidden; color: #e9e2d4;
+  font-family: 'EB Garamond', Georgia, serif; font-size: clamp(11px, min(1.05vw, 1.85vh), 17px);
+  display: grid; grid-template-columns: 12.5em 1fr; grid-template-rows: auto 1fr;
+  background: radial-gradient(ellipse at 50% 120%, #3a1408 0, transparent 55%), linear-gradient(180deg, #120d0b, #0b0909 60%, #140b08); }
+.cr2 button { font: inherit; }
+.cr2 button:focus-visible, .cr2 select:focus-visible, .cr2 input:focus-visible { outline: 2px solid #f0d08a; outline-offset: 2px; }
+
+/* right-side figure + banner (no dark overlay on the picture itself, just an edge fade) */
+.cr2-right { position: absolute; right: 0; top: 4em; bottom: 0; width: 13%; background: url(/characters/portraits/ezio-popup.png) 30% 60% / cover;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 45%); mask: linear-gradient(90deg, transparent, #000 45%); pointer-events: none; }
+.cr2-flag { position: absolute; right: 2%; top: 4.6em; width: 4.4em; height: 15em; background: linear-gradient(#9a161c, #5a080c);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 88%, 0 100%); box-shadow: inset 0 0 0 2px #d9b25e55; pointer-events: none; }
+.cr2-flag::after { content: ''; position: absolute; left: 20%; right: 20%; top: 35%; height: 26%; background: #e6c7c7aa;
+  clip-path: polygon(50% 0, 62% 60%, 100% 100%, 74% 100%, 50% 48%, 26% 100%, 0 100%, 38% 60%); }
+
+/* top bar */
+.cr2-top { grid-column: 1 / -1; position: relative; z-index: 2; display: flex; align-items: center; gap: 2.4em; height: 4em; padding: 0 1.6em 0 2.4em;
+  border-bottom: 1px solid #8f6c2666; background: linear-gradient(#0b0909, #0b0909e6); }
+.cr2-logo { display: flex; align-items: center; gap: .6em; background: none; border: 0; padding: 0; cursor: pointer; color: #f1ebe0; }
+.cr2-logo-crest { width: 2.4em; height: 3em; filter: sepia(1) saturate(2.4) hue-rotate(-12deg); }
+.cr2-logo span { display: flex; flex-direction: column; line-height: 1; font-family: Cinzel, serif; text-transform: uppercase; text-align: center; }
+.cr2-logo small { font-size: .7em; letter-spacing: .15em; } .cr2-logo b { font-size: 1.3em; font-weight: 600; letter-spacing: .04em; }
+.cr2-nav { display: flex; gap: .4em; height: 100%; }
+.cr2-nav button { display: flex; align-items: center; gap: .55em; padding: 0 1.1em; background: none; border: 0; color: #d8cfbf; cursor: pointer;
+  font-family: Cinzel, serif; font-size: .78em; letter-spacing: .1em; text-transform: uppercase; position: relative; }
+.cr2-nav button:disabled { cursor: default; }
+.cr2-nav button:not(:disabled):hover { color: var(--gold); }
+.cr2-nav button.on { color: var(--gold); font-size: .9em; background: radial-gradient(ellipse at 50% 100%, #8a1418aa, transparent 70%); }
+.cr2-nav button.on::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: 0; height: 2px; background: linear-gradient(90deg, transparent, #e04a4a, transparent); }
+.cr2-nav .ring { display: grid; place-items: center; width: 1.7em; height: 1.7em; border: 1px solid currentColor; border-radius: 50%; }
+.cr2-nav .ring.sm { font-size: .9em; }
+.cr2-nav .ic { width: .9em; height: 1.1em; }
+.cr2-user { margin-left: auto; display: flex; align-items: center; gap: .6em; padding: .3em .8em .3em .3em; border: 1px solid #8f6c2688; background: #0d0b0c; cursor: text; }
+.cr2-user .av { position: relative; width: 2.3em; height: 2.3em; border: 1px solid var(--gold2); overflow: hidden; }
+.cr2-user .av > * { position: absolute; inset: 0; background-repeat: no-repeat; }
+.cr2-user input { width: 7em; background: transparent; border: 0; outline: 0; color: #f1ebe0; font: inherit; font-size: 1em; }
+.cr2-user em { font-style: normal; font-family: Cinzel, serif; font-size: .62em; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); border: 1px solid var(--gold2); padding: .1em .5em; }
+.cr2-user svg { transform: rotate(90deg); color: #c9bfae; }
+
+/* side menu */
+.cr2-side { position: relative; z-index: 1; display: flex; flex-direction: column; padding-top: 1.6em; border-right: 1px solid #8f6c2644; background: #0b0909cc; }
+.cr2-side button { display: flex; align-items: center; gap: .9em; height: 3.3em; padding: 0 1.6em; background: none; border: 0; border-bottom: 1px solid #8f6c2633;
+  color: #d8cfbf; cursor: pointer; font-family: Cinzel, serif; font-size: .78em; letter-spacing: .08em; text-transform: uppercase; text-align: left; }
+.cr2-side button:disabled { cursor: default; }
+.cr2-side button:not(:disabled):not(.on):hover { color: var(--gold); }
+.cr2-side button svg { color: var(--gold); flex: none; }
+.cr2-side button.on { color: #fff; background: linear-gradient(90deg, #8a1418, #5a080c); border: 1px solid #e04a4a; box-shadow: 0 0 16px #c8282e66; }
+.cr2-side button.on svg { color: #fff; }
+.cr2-side-crest { width: 4.6em; height: 5.6em; margin: auto auto 3em; opacity: .55; filter: sepia(1) saturate(2) hue-rotate(-12deg); }
+
+/* main column */
+.cr2-main { position: relative; z-index: 1; display: flex; flex-direction: column; gap: .6em; padding: .7em 14% .9em 1em; min-width: 0; }
+.cr2-hero { position: relative; height: 9.5em; display: flex; align-items: center; justify-content: space-between; padding: 0 2em 0 2.6em;
+  border: 1px solid #8f6c2666; background: linear-gradient(90deg, #0b0909 22%, #0b090966 45%, transparent 70%), url(/places/Florence_Cathedral.jpg) 50% 40% / cover; }
+.cr2-hero .mark { display: block; width: 2em; margin: 0 auto .2em 5.6em; color: var(--gold); }
+.cr2-hero .mark .ic { width: 1.6em; height: 2em; filter: sepia(1) saturate(2.4) hue-rotate(-12deg); }
+.cr2-hero h1 { margin: 0; font-family: Cinzel, serif; font-weight: 500; font-size: 1.95em; letter-spacing: .08em; text-transform: uppercase; color: #f0d08a; line-height: 1.1; }
+.cr2-hero p { margin: .15em 0 0; font-size: 1em; color: #e6dccb; }
+.cr2-hero .quote { align-self: flex-end; margin-bottom: 1em; text-align: right; color: #f0d08a; font-size: .95em; text-shadow: 0 1px 4px #000; }
+
+.cr2-box { border: 1px solid var(--gold2); background: #0d0b0ce8; box-shadow: inset 0 0 0 3px #0b0909, inset 0 0 0 4px #8f6c2633; padding: .7em 1em .9em; }
+.cr2-box h2 { display: flex; align-items: center; gap: .7em; margin: 0 0 .7em; font-family: Cinzel, serif; font-weight: 500; font-size: 1.05em; letter-spacing: .08em; text-transform: uppercase; color: #f0d08a; }
+.cr2-box .ring { display: grid; place-items: center; width: 1.7em; height: 1.7em; border: 1px solid var(--gold); border-radius: 50%; color: var(--gold); }
+
+/* assassin cards */
+.cr2-cards-wrap { position: relative; }
+.cr2-cards { display: grid; grid-auto-flow: column; grid-auto-columns: calc((100% - 5 * .8em) / 6.25); gap: .8em; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding: 2px; }
+.cr2-cards::-webkit-scrollbar { display: none; }
+.cr2-card { scroll-snap-align: start; position: relative; display: flex; flex-direction: column; align-items: center; padding: 3px 3px .7em; cursor: pointer;
+  border: 1px solid #8f6c26; background: linear-gradient(#141012, #0b0a0b); box-shadow: inset 0 0 0 2px #0b0909, inset 0 0 0 3px #8f6c2644; transition: border-color .2s, box-shadow .2s, transform .2s; }
+.cr2-card:hover { border-color: var(--gold); transform: translateY(-2px); }
+.cr2-card .ph { position: relative; width: 100%; aspect-ratio: 1 / .92; overflow: hidden; }
+.cr2-card .ph > * { position: absolute; inset: 0; background-repeat: no-repeat; }
+.cr2-card b { margin-top: .5em; font-family: Cinzel, serif; font-weight: 500; font-size: .82em; letter-spacing: .05em; text-transform: uppercase; color: #f1ebe0; text-align: center; }
+.cr2-card small { font-size: .74em; color: #c9bfae; }
+.cr2-card .crest { width: 1.2em; height: 1.5em; margin: .35em 0; filter: sepia(1) saturate(2.4) hue-rotate(-12deg); opacity: .85; }
+.cr2-card button { width: 82%; height: 1.9em; cursor: pointer; color: #f1ebe0; font-size: .78em; background: #0b0a0b; border: 1px solid #c9bfae88; transition: background .2s, border-color .2s; }
+.cr2-card button:hover { border-color: var(--gold); }
+.cr2-card.on { border-color: #e04a4a; background: linear-gradient(#5a0c10, #2a0a0c 70%, #1a0709); box-shadow: 0 0 0 1px #e04a4a, 0 0 22px #c8282e88; }
+.cr2-card.on button { background: linear-gradient(#a3141c, #6a0a10); border-color: #e05a5a; }
+.cr2-card .tick { position: absolute; right: 8px; top: 8px; width: 1.5em; height: 1.5em; border-radius: 50%; display: grid; place-items: center; font-size: .8em; color: #f0d08a; border: 1px solid #f0d08a; background: #0b0909aa; }
+.cr2-arrow { position: absolute; top: 38%; width: 2.4em; height: 2.4em; border-radius: 50%; display: grid; place-items: center; cursor: pointer; color: #f0d08a; background: #0b0909; border: 1px solid var(--gold); box-shadow: 0 0 10px #000; }
+.cr2-arrow.r { right: -.6em; } .cr2-arrow.l { left: -.6em; }
+.cr2-arrow:hover { background: #2a0a0c; }
+
+/* match configuration */
+.cr2-cfg { display: grid; grid-template-columns: 1.1fr 1fr 1fr; gap: 1.2em; align-items: end; }
+.cr2-modes { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #5a4a34; }
+.cr2-modes button { display: flex; align-items: center; justify-content: center; gap: .6em; height: 2.6em; cursor: pointer; background: #0b0a0b; border: 0; color: #d8cfbf;
+  font-family: Cinzel, serif; font-size: .78em; letter-spacing: .06em; text-transform: uppercase; }
+.cr2-modes button svg { color: var(--gold); }
+.cr2-modes button:not(.on):hover { color: var(--gold); }
+.cr2-modes button.on { color: #fff; background: linear-gradient(#a3141c, #5a080c); box-shadow: inset 0 0 0 1px #e04a4a; }
+.cr2-modes button.on svg { color: #fff; }
+.cr2-field { display: flex; flex-direction: column; gap: .3em; }
+.cr2-field .lbl { font-family: Cinzel, serif; font-size: .62em; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.cr2-field .lbl::before { content: '◆ '; font-size: .7em; }
+.cr2-field .sel { position: relative; display: flex; align-items: center; gap: .6em; height: 2.6em; padding: 0 .9em; border: 1px solid #5a4a34; background: #0b0a0b; color: #c9bfae; }
+.cr2-field .sel::after { content: ''; position: absolute; right: 1em; top: 40%; width: .45em; height: .45em; border: solid #f1ebe0; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); pointer-events: none; }
+.cr2-field select { flex: 1; height: 100%; appearance: none; background: transparent; border: 0; color: #f1ebe0; font: inherit; font-size: .9em; cursor: pointer; }
+.cr2-field select option { background: #0b0a0b; }
+
+.cr2-err { margin: 0; text-align: center; color: #ff8a8a; }
+.cr2-go { align-self: center; display: flex; align-items: center; justify-content: center; gap: .8em; width: 20em; height: 3.1em; margin-top: .3em; cursor: pointer; color: #f1ebe0;
+  font-family: Cinzel, serif; font-size: 1em; letter-spacing: .1em; text-transform: uppercase; border: 1px solid #e05a5a;
+  background: linear-gradient(#a3141c, #5a080c); clip-path: polygon(5% 0, 95% 0, 100% 50%, 95% 100%, 5% 100%, 0 50%); box-shadow: inset 0 0 0 2px #d9b25e88; transition: filter .2s; }
+.cr2-go:hover:not(:disabled) { filter: brightness(1.2); }
+.cr2-go:disabled { opacity: .6; cursor: progress; }
+.cr2-go .ic { width: 1.3em; height: 1.6em; filter: sepia(1) saturate(2.4) hue-rotate(-12deg); }
+
+@media (max-width: 900px) {
+  .cr2 { grid-template-columns: 1fr; font-size: 13px; }
+  .cr2-side { flex-direction: row; overflow-x: auto; padding: 0; } .cr2-side button { flex: none; } .cr2-side-crest { display: none; }
+  .cr2-nav { display: none; } .cr2-right, .cr2-flag { display: none; }
+  .cr2-main { padding: .8em; }
+  .cr2-cards { grid-auto-columns: 42%; }
+  .cr2-cfg { grid-template-columns: 1fr; }
+  .cr2-hero .quote { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .cr2 * { transition: none !important; } }
+
+/* full-page background picture (save it as public/home/createroom-bg.png) */
+.cr2 { background: url(/home/createroom-bg.png) 50% 0 / cover no-repeat fixed, linear-gradient(180deg, #120d0b, #0b0909 60%, #140b08); }
+.cr2-right, .cr2-flag { display: none; }
+.cr2-top { background: linear-gradient(#0b0909ee, #0b0909bb); }
+.cr2-side { background: #0b0909aa; }
+.cr2-main { padding-right: 1em; }
+.cr2-hero { background: linear-gradient(90deg, #0b0909cc 15%, transparent 55%); border-color: #8f6c2655; }
+.cr2-box { background: #0d0b0cd9; }
+
+/* layout over the background picture, like the reference:
+   city + hooded assassin show through the top banner, seated assassin + flags stay visible on the right */
+.cr2 { background: #0b0909 url(/home/createroom-bg.png) 50% 0 / 100% 100% no-repeat; }
+.cr2-main { padding: .7em 13% .9em 1em; }
+.cr2-hero { height: 11em; background: linear-gradient(90deg, #0b0909dd 0, #0b090988 25%, transparent 45%); border: 1px solid #8f6c2655; }
+.cr2-box { background: #0d0b0ce6; }
+.cr2-side { background: #0b0909e6; }
+
+/* Vs PC: choose opponents */
+.cr2-opps { margin-top: .9em; padding-top: .8em; border-top: 1px solid #8f6c2644; }
+.cr2-opps .lbl { font-family: Cinzel, serif; font-size: .62em; letter-spacing: .1em; text-transform: uppercase; color: var(--gold); }
+.cr2-opps .row { display: flex; flex-wrap: wrap; gap: .7em; margin-top: .5em; }
+.cr2-opp { position: relative; display: flex; align-items: stretch; border: 1px solid #5a4a34; background: #0b0a0b; }
+.cr2-opp.on { border-color: #e04a4a; box-shadow: 0 0 0 1px #e04a4a, 0 0 12px #c8282e66; }
+.cr2-opp .face { display: flex; align-items: center; gap: .6em; padding: .35em .9em .35em .35em; background: none; border: 0; color: #f1ebe0; cursor: pointer; text-align: left; }
+.cr2-opp .ph, .cr2-opp-pick .ph { position: relative; display: block; width: 2.4em; height: 2.4em; overflow: hidden; border: 1px solid var(--gold2); }
+.cr2-opp .ph > *, .cr2-opp-pick .ph > * { position: absolute; inset: 0; background-repeat: no-repeat; }
+.cr2-opp .tx { display: flex; flex-direction: column; line-height: 1.15; }
+.cr2-opp .tx b { font-family: Cinzel, serif; font-size: .75em; font-weight: 600; }
+.cr2-opp .tx small { font-size: .8em; color: #c9bfae; }
+.cr2-opp .rm { width: 2em; background: none; border: 0; border-left: 1px solid #3a3026; color: #c9bfae; cursor: pointer; }
+.cr2-opp .rm:hover { color: #ff8a8a; }
+.cr2-opp.add { align-items: center; padding: 0 1.2em; cursor: pointer; color: #f1ebe0; border-style: dashed; border-color: var(--gold2);
+  font-family: Cinzel, serif; font-size: .72em; letter-spacing: .08em; text-transform: uppercase; }
+.cr2-opp.add:hover { border-color: var(--gold); color: var(--gold); }
+.cr2-opp-pick { display: grid; grid-template-columns: repeat(10, 1fr); gap: .45em; margin-top: .7em; }
+.cr2-opp-pick button { display: flex; flex-direction: column; align-items: center; gap: .25em; padding: .3em .2em; cursor: pointer; background: #0b0a0b; border: 1px solid #3a3026; color: #d8cfbf; }
+.cr2-opp-pick button:hover:not(:disabled) { border-color: var(--gold); }
+.cr2-opp-pick button.on { border-color: #e04a4a; background: #2a0a0c; color: #fff; }
+.cr2-opp-pick button:disabled { opacity: .3; cursor: not-allowed; }
+.cr2-opp-pick small { font-size: .68em; }
+@media (max-width: 900px) { .cr2-opp-pick { grid-template-columns: repeat(5, 1fr); } }
