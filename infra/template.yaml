@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
   Empire of Assassins. Game server (Node + socket.io, unchanged) on one small EC2 instance behind
-  CloudFront for HTTPS/WebSockets, and the React frontend on Amplify Hosting (manual deploys).
+  CloudFront for HTTPS/WebSockets. Frontend in a private S3 bucket behind CloudFront, deployed by
+  GitHub Actions on every push to main (OIDC, no AWS keys in GitHub).
   Note: no player authentication; anyone with the link can create and join rooms.
 
 Parameters:
@@ -17,19 +18,12 @@ Parameters:
   InstanceType:
     Type: String
     Default: t3.micro
-  GitHubToken:
-    Type: String
-    NoEcho: true
-    Default: ''
-    Description: GitHub personal access token (repo + admin:repo_hook) so Amplify can build on every push. Empty = manual deploys.
   AmiId:
     Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
     Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
 
-Conditions:
-  UseGitHub: !Not [!Equals [!Ref GitHubToken, '']]
-
 Resources:
+  # ---------- game server (unchanged) ----------
   ServerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -121,37 +115,113 @@ Resources:
           CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad          # Managed-CachingDisabled
           OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3  # Managed-AllViewer (needed for WebSocket upgrade)
 
-  GitWebApp:
-    Type: AWS::Amplify::App
+  # ---------- website: private S3 bucket + CloudFront ----------
+  SiteBucket:
+    Type: AWS::S3::Bucket
     Properties:
-      Name: empire-of-assassins
-      Platform: WEB
-      Repository: !If [UseGitHub, !Select [0, !Split ['.git', !Ref RepoUrl]], !Ref AWS::NoValue]
-      AccessToken: !If [UseGitHub, !Ref GitHubToken, !Ref AWS::NoValue]
-      EnvironmentVariables:
-        - { Name: VITE_SERVER_URL, Value: !Sub 'https://${ServerCdn.DomainName}' }
-        - { Name: VITE_CLOUDINARY_CLOUD, Value: tgjvnqns }
-      CustomRules:
-        # single-page app: /create, /lobby, /game all serve index.html; real files are served as-is
-        - Source: '</^[^.]+$|\.(?!(css|gif|ico|jpg|jpeg|js|png|txt|svg|woff|woff2|ttf|map|json|webp|glb|avif)$)([^.]+$)/>'
-          Target: /index.html
-          Status: '200'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
 
-  GitWebBranch:
-    Type: AWS::Amplify::Branch
+  SiteOac:
+    Type: AWS::CloudFront::OriginAccessControl
     Properties:
-      AppId: !GetAtt GitWebApp.AppId
-      BranchName: main
-      Stage: PRODUCTION
-      EnableAutoBuild: !If [UseGitHub, true, false]
+      OriginAccessControlConfig:
+        Name: !Sub ${AWS::StackName}-site
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  SiteCdn:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: Empire of Assassins website
+        PriceClass: PriceClass_100
+        HttpVersion: http2and3
+        DefaultRootObject: index.html
+        Origins:
+          - Id: site
+            DomainName: !GetAtt SiteBucket.RegionalDomainName
+            OriginAccessControlId: !GetAtt SiteOac.Id
+            S3OriginConfig: { OriginAccessIdentity: '' }
+        DefaultCacheBehavior:
+          TargetOriginId: site
+          ViewerProtocolPolicy: redirect-to-https
+          Compress: true
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6   # Managed-CachingOptimized
+        # single-page app: /create, /lobby, /game serve index.html
+        CustomErrorResponses:
+          - { ErrorCode: 403, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0 }
+          - { ErrorCode: 404, ResponseCode: 200, ResponsePagePath: /index.html, ErrorCachingMinTTL: 0 }
+
+  SiteBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref SiteBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: cloudfront.amazonaws.com }
+            Action: s3:GetObject
+            Resource: !Sub ${SiteBucket.Arn}/*
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteCdn}
+
+  # ---------- GitHub Actions deploy (OIDC) ----------
+  GitHubOidc:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList: [sts.amazonaws.com]
+      ThumbprintList: [6938fd4d98bab03faadb97b34396831e3780aea1]
+
+  GitHubDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Federated: !Ref GitHubOidc }
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: repo:ab2030909/Empire-of-Assassins-Creed:ref:refs/heads/main
+      Policies:
+        - PolicyName: site-deploy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: [s3:ListBucket]
+                Resource: !GetAtt SiteBucket.Arn
+              - Effect: Allow
+                Action: [s3:PutObject, s3:DeleteObject, s3:GetObject]
+                Resource: !Sub ${SiteBucket.Arn}/*
+              - Effect: Allow
+                Action: [cloudfront:CreateInvalidation]
+                Resource: !Sub arn:aws:cloudfront::${AWS::AccountId}:distribution/${SiteCdn}
 
 Outputs:
   ServerUrl:
-    Description: Game server (use as VITE_SERVER_URL when building the frontend)
     Value: !Sub https://${ServerCdn.DomainName}
-  AmplifyAppId:
-    Value: !GetAtt GitWebApp.AppId
   WebsiteUrl:
-    Value: !Sub https://main.${GitWebApp.DefaultDomain}
+    Value: !Sub https://${SiteCdn.DomainName}
+  SiteBucketName:
+    Value: !Ref SiteBucket
+  SiteDistributionId:
+    Value: !Ref SiteCdn
+  DeployRoleArn:
+    Value: !GetAtt GitHubDeployRole.Arn
   ServerInstanceId:
     Value: !Ref Server
