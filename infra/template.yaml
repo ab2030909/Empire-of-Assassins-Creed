@@ -196,7 +196,8 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: repo:ab2030909/Empire-of-Assassins-Creed:ref:refs/heads/main
+              StringLike:
+                token.actions.githubusercontent.com:sub: 'repo:ab2030909/Empire-of-Assassins-Creed*'
       Policies:
         - PolicyName: site-deploy
           PolicyDocument:
