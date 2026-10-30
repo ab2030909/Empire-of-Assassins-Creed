@@ -15,3 +15,11 @@
 .iv-back.mobile video { object-fit: cover; }
 .iv-back.mobile .iv-x { top: calc(.7em + env(safe-area-inset-top)); right: calc(.7em + env(safe-area-inset-right)); }
 .iv-back.mobile .iv-sound { bottom: calc(.7em + env(safe-area-inset-bottom)); left: calc(.7em + env(safe-area-inset-left)); }
+
+/* phones: framed popup at the video's own shape (no stretching or cropping) */
+.iv-back.mobile { background: #000d; }
+.iv-back.mobile .iv-box { width: auto; height: auto; aspect-ratio: auto; max-width: 94vw; max-height: 88dvh;
+  border: 1px solid #8f6c26; box-shadow: 0 0 0 3px #0b0909, 0 0 0 4px #8f6c2655, 0 20px 60px #000; }
+.iv-back.mobile video { width: auto; height: auto; max-width: 94vw; max-height: 88dvh; object-fit: contain; }
+.iv-back.mobile .iv-x { top: .5em; right: .5em; }
+.iv-back.mobile .iv-sound { bottom: .5em; left: .5em; }
