@@ -23,3 +23,7 @@
 .iv-back.mobile video { width: auto; height: auto; max-width: 94vw; max-height: 88dvh; object-fit: contain; }
 .iv-back.mobile .iv-x { top: .5em; right: .5em; }
 .iv-back.mobile .iv-sound { bottom: .5em; left: .5em; }
+
+/* phones: large 9:16 frame, as big as the screen allows */
+.iv-back.mobile .iv-box { aspect-ratio: 9 / 16; width: min(96vw, calc(94dvh * 9 / 16)); height: auto; max-width: none; max-height: none; }
+.iv-back.mobile video { width: 100%; height: 100%; max-width: none; max-height: none; object-fit: contain; background: #000; }
