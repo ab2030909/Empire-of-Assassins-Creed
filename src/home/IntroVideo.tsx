@@ -9,7 +9,9 @@ const isPhone = () => matchMedia('(max-width: 820px), (pointer: coarse) and (max
 
 // Videos are served from Cloudinary (compressed, best format per browser) when VITE_CLOUDINARY_CLOUD is set.
 const CLOUD = import.meta.env.VITE_CLOUDINARY_CLOUD as string | undefined;
-const videoUrl = (name: string, w: number) => (CLOUD ? `https://res.cloudinary.com/${CLOUD}/video/upload/q_auto:eco,f_auto,w_${w},c_limit/eoa/${name}` : `/${name}.mp4`);
+const videoUrl = (name: string, w: number, portrait = false) => (CLOUD
+  ? `https://res.cloudinary.com/${CLOUD}/video/upload/q_auto:eco,f_auto,${portrait ? `ar_9:16,c_fill,g_center,w_${w}` : `w_${w},c_limit`}/eoa/${name}`
+  : `/${name}.mp4`);
 
 export function IntroVideo() {
   const [phone] = useState(isPhone);
@@ -40,7 +42,7 @@ export function IntroVideo() {
   return (
     <div className={`iv-back ${phone ? 'mobile' : ''}`} onClick={() => setOpen(false)}>
       <div className="iv-box" role="dialog" aria-modal="true" aria-label="Intro video" onClick={(e) => e.stopPropagation()}>
-        <video ref={vid} src={phone ? videoUrl('ac-mobile', 720) : videoUrl('ac', 1280)} autoPlay playsInline preload="auto" onEnded={() => setOpen(false)} />
+        <video ref={vid} src={phone ? videoUrl('ac-mobile', 720, true) : videoUrl('ac', 1280)} autoPlay playsInline preload="auto" onEnded={() => setOpen(false)} />
         <button className="iv-x" onClick={() => setOpen(false)} aria-label="Close video">✕</button>
         <button className="iv-sound" onClick={toggleSound} aria-label={muted ? 'Turn sound on' : 'Mute'}>{muted ? '🔇 Tap for sound' : '🔊'}</button>
       </div>
