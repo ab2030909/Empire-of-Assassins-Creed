@@ -9,6 +9,7 @@ import { usePhoto } from '../photos';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { sfx } from '../sfx';
 import { buildTable, stoneTexture, woodTexture } from './scenery';
 
 /** Bakes a static group into one mesh per material (hundreds of draw calls -> a handful). */
@@ -385,7 +386,7 @@ export default function Board3D({ g, selected, onSelect, view3d, onSettled, onPa
         const first = lastRoll === -1; lastRoll = gs.rollSeq;
         const to = gs.dice.map((v, k) => new THREE.Quaternion().setFromEuler(new THREE.Euler(...FACE_UP[v])).premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), (k ? -0.3 : 0.25))));
         if (first || reduce) dice.forEach((d, k) => d.quaternion.copy(to[k]));
-        else diceAnim = { t0: performance.now(), from: dice.map((d) => d.quaternion.clone()), to, spin: dice.map(() => new THREE.Vector3(Math.random() * 14 + 8, Math.random() * 10, Math.random() * 14 + 8)) };
+        else { sfx.dice(); } if (!(first || reduce)) diceAnim = { t0: performance.now(), from: dice.map((d) => d.quaternion.clone()), to, spin: dice.map(() => new THREE.Vector3(Math.random() * 14 + 8, Math.random() * 10, Math.random() * 14 + 8)) };
       }
       // selection
       if (sel != null) { const t = tileInfo(sel); selRing.visible = true; selRing.position.set(t.x, 0.07 + TILE_H + 0.012, t.z); selRing.rotation.y = t.rot; selRing.scale.set(t.w, 1, t.d); }
@@ -488,7 +489,7 @@ export default function Board3D({ g, selected, onSelect, view3d, onSettled, onPa
         if (!pw.hop && pw.queue.length && !diceAnim) {
           const next = pw.queue.shift()!; const from = pw.obj.position.clone(); const to = slotPos(next, 0, 1);
           const far = (next - pw.shown + N) % N !== 1;
-          pw.hop = { from, to, t0: now, dur: far ? 700 : 230 }; pw.shown = next;
+          pw.hop = { from, to, t0: now, dur: far ? 700 : 230 }; pw.shown = next; sfx.step();
         }
         if (pw.hop) {
           moving = true;
@@ -496,7 +497,7 @@ export default function Board3D({ g, selected, onSelect, view3d, onSettled, onPa
           pw.obj.position.lerpVectors(pw.hop.from, pw.hop.to, p);
           pw.obj.position.y = pw.hop.to.y + Math.sin(p * Math.PI) * (pw.hop.dur > 300 ? 1.2 : 0.35);
           const dir = pw.hop.to.clone().sub(pw.hop.from); if (dir.lengthSq() > 1e-4) pw.obj.rotation.y = Math.atan2(dir.x, dir.z);
-          if (p >= 1) { pw.hop = null; moved = true; }
+          if (p >= 1) { pw.hop = null; moved = true; if (!pw.queue.length) sfx.land(); }
         }
         const ring = pw.obj.getObjectByName('ring')!; ring.visible = id === current;
         if (id === current && !reduce) ring.scale.setScalar(1 + Math.sin(time * 4) * 0.08);

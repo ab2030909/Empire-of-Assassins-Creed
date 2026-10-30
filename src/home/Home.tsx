@@ -7,6 +7,7 @@ import { FeatureCards } from './FeatureCards';
 import { LocationCarousel } from './LocationCarousel';
 import { CreateRoomModal, JoinRoomModal } from './RoomModals';
 import { SettingsPanel } from './SettingsPanel';
+import { IntroVideo } from './IntroVideo';
 import { Modal } from '../App';
 import { HowToPlaySection } from './HowToPlaySection';
 import { CharacterSection } from '../characters/CharacterSection';
@@ -40,6 +41,7 @@ export default function Home({ connected, credits }: { connected: boolean; credi
 
   return (
     <div className="hp">
+      <IntroVideo />
       <a className="skip" href="#main" onClick={(e) => { e.preventDefault(); scrollToId('features'); }}>Skip to content</a>
       <Navbar onCreate={() => create()} onJoin={join} onSettings={() => setDialog('settings')} />
       <Hero onCreate={() => create()} onJoin={join} connected={connected} />

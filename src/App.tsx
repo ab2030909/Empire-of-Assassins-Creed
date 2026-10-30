@@ -7,6 +7,7 @@ import Game from './Game';
 import Home from './home/Home';
 import { CharacterSection } from './characters/CharacterSection';
 import { LobbyPage } from './lobby/LobbyPage';
+import { BgMusic } from './BgMusic';
 
 export function Modal({ title, onClose, children, wide }: { title: string; onClose: () => void; children: ReactNode; wide?: boolean }) {
   useEffect(() => {
@@ -94,10 +95,11 @@ export default function App() {
     <div className="banner" role="status">Connection to the Animus lost. Reconnecting…</div>
   );
 
-  if (view?.game) return <>{banner}<GamePage view={view} onLeave={leaveRoom} /></>;
-  if (view) return <>{banner}<LobbyPage view={view} onLeave={leaveRoom} /></>;
+  const music = <BgMusic />;
+  if (view?.game) return <>{banner}{music}<GamePage view={view} onLeave={leaveRoom} /></>;
+  if (view) return <>{banner}{music}<LobbyPage view={view} onLeave={leaveRoom} /></>;
 
-  return <>{banner}<Home connected={connected} credits={<Credits />} /></>;
+  return <>{banner}{music}<Home connected={connected} credits={<Credits />} /></>;
 }
 
 export function LegacyLobby({ view, onLeave }: { view: RoomView; onLeave: () => void }) {

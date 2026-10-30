@@ -345,3 +345,8 @@ body.no-motion *, body.no-motion *::before { animation: none !important; transit
 .game:has(.scene3d) .hud { top: auto; bottom: 14px; transform: translateX(-50%); width: min(520px, 80%); }
 .game:has(.scene3d) .board-tools { top: 10px; right: 10px; }
 .scene3d::after { content: 'Drag to rotate · scroll to zoom · click a space'; position: absolute; left: 12px; top: 10px; font-size: .75rem; color: #c9bfae; opacity: .7; pointer-events: none; }
+
+/* background music toggle */
+.bgm-btn { position: fixed; left: 14px; bottom: 14px; z-index: 950; width: 42px; height: 42px; border-radius: 50%; cursor: pointer; color: #f0d08a; font-size: 18px; background: #0b0909d9; border: 1px solid #8f6c26; box-shadow: 0 4px 14px #000a; }
+.bgm-btn:hover { border-color: #d9b25e; }
+.bgm-btn:focus-visible { outline: 2px solid #f0d08a; outline-offset: 2px; }
