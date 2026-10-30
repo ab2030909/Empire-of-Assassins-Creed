@@ -7,6 +7,7 @@ const KEY = 'eoa-music';
 
 export function BgMusic() {
   const audio = useRef<HTMLAudioElement | null>(null);
+  const actx = useRef<AudioContext | null>(null);
   const [on, setOn] = useState(() => localStorage.getItem(KEY) !== 'off');
   const [intro, setIntro] = useState(false);
 
@@ -15,7 +16,7 @@ export function BgMusic() {
     audio.current = a;
     // muffled and quiet: route through a low-pass filter (like music heard through a wall)
     try {
-      const c = new AudioContext();
+      const c = new AudioContext(); actx.current = c;
       const lp = c.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 900; lp.Q.value = 0.5;
       const g = c.createGain(); g.gain.value = 0.18;
       c.createMediaElementSource(a).connect(lp).connect(g).connect(c.destination);
@@ -30,12 +31,12 @@ export function BgMusic() {
     localStorage.setItem(KEY, on ? 'on' : 'off');
     const a = audio.current!;
     if (!on || intro) { a.pause(); return; }
-    const start = () => { a.play().catch(() => {}); };
+    // the audio context must be resumed inside a user gesture, or the music stays silent
+    const start = () => { actx.current?.resume().catch(() => {}); a.play().catch(() => {}); };
     start();
-    // retry on first interaction if autoplay was blocked
-    window.addEventListener('pointerdown', start, { once: true });
-    window.addEventListener('keydown', start, { once: true });
-    return () => { window.removeEventListener('pointerdown', start); window.removeEventListener('keydown', start); };
+    const evs = ['pointerdown', 'touchend', 'click', 'keydown'] as const;
+    evs.forEach((ev) => window.addEventListener(ev, start, { capture: true }));
+    return () => evs.forEach((ev) => window.removeEventListener(ev, start, { capture: true }));
   }, [on, intro]);
 
   return (

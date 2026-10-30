@@ -21,30 +21,39 @@ export function IntroVideo() {
 
   useEffect(() => { const t = setTimeout(() => setOpen(true), 1000); return () => clearTimeout(t); }, []);
 
+  const justUnmuted = useRef(false);
   useEffect(() => {
     if (!open) return;
     const v = vid.current!;
     v.muted = false;
     v.play().catch(() => { v.muted = true; setMuted(true); v.play().catch(() => {}); });
-    const unmute = () => { if (v.muted) { v.muted = false; setMuted(false); v.play().catch(() => {}); } };
+    // first tap/click/key anywhere turns the sound on (that tap does not close or re-mute)
+    const unmute = () => {
+      if (!v.muted) return;
+      v.muted = false; v.volume = 1; setMuted(false); justUnmuted.current = true;
+      v.play().catch(() => {});
+      setTimeout(() => { justUnmuted.current = false; }, 400);
+    };
     const key = (e: KeyboardEvent) => (e.key === 'Escape' ? setOpen(false) : unmute());
-    window.addEventListener('pointerdown', unmute, { once: true });
+    const evs = ['pointerdown', 'touchend', 'click'] as const;
+    evs.forEach((ev) => window.addEventListener(ev, unmute, { capture: true }));
     window.addEventListener('keydown', key);
-    return () => { window.removeEventListener('pointerdown', unmute); window.removeEventListener('keydown', key); };
+    return () => { evs.forEach((ev) => window.removeEventListener(ev, unmute, { capture: true })); window.removeEventListener('keydown', key); };
   }, [open]);
 
   // let the background music pause while the video is open
   useEffect(() => { window.dispatchEvent(new CustomEvent('eoa-intro', { detail: open })); }, [open]);
 
   if (!open) return null;
-  const toggleSound = () => { const v = vid.current!; v.muted = !v.muted; setMuted(v.muted); if (!v.muted) v.play().catch(() => {}); };
+  const toggleSound = () => { if (justUnmuted.current) return; const v = vid.current!; v.muted = !v.muted; setMuted(v.muted); if (!v.muted) v.play().catch(() => {}); };
 
   return (
-    <div className={`iv-back ${phone ? 'mobile' : ''}`} onClick={() => setOpen(false)}>
+    <div className={`iv-back ${phone ? 'mobile' : ''}`} onClick={() => { if (!justUnmuted.current) setOpen(false); }}>
       <div className="iv-box" role="dialog" aria-modal="true" aria-label="Intro video" onClick={(e) => e.stopPropagation()}>
         <video ref={vid} src={phone ? videoUrl('ac-mobile', 720, true) : videoUrl('ac', 1280)} autoPlay playsInline preload="auto" onEnded={() => setOpen(false)} />
         <button className="iv-x" onClick={() => setOpen(false)} aria-label="Close video">✕</button>
         <button className="iv-sound" onClick={toggleSound} aria-label={muted ? 'Turn sound on' : 'Mute'}>{muted ? '🔇 Tap for sound' : '🔊'}</button>
+        {muted && <div className="iv-tap" aria-hidden="true">🔊 Tap anywhere for sound</div>}
       </div>
     </div>
   );
